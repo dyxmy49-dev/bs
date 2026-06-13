@@ -13,20 +13,22 @@ function Aimbot.new(context)
         smoothing = 0.1,
         hitpart = "Head",
         teamCheck = true,
-        visibleCheck = false,
     }
-    self.target = nil
     self.running = true
     self.holding = false
     self.cleaner:Give(function() self.running = false end)
     self.cleaner:Give(self.services.UserInputService.InputBegan:Connect(function(input, gpe)
         if gpe then return end
-        if input.KeyCode == Enum.KeyCode.LAlt or input.UserInputType == Enum.UserInputType.MouseButton2 then
+        if input.KeyCode == Enum.KeyCode.LeftAlt
+        or input.KeyCode == Enum.KeyCode.RightAlt
+        or input.UserInputType == Enum.UserInputType.MouseButton2 then
             self.holding = true
         end
     end))
     self.cleaner:Give(self.services.UserInputService.InputEnded:Connect(function(input)
-        if input.KeyCode == Enum.KeyCode.LAlt or input.UserInputType == Enum.UserInputType.MouseButton2 then
+        if input.KeyCode == Enum.KeyCode.LeftAlt
+        or input.KeyCode == Enum.KeyCode.RightAlt
+        or input.UserInputType == Enum.UserInputType.MouseButton2 then
             self.holding = false
         end
     end))
@@ -39,7 +41,7 @@ function Aimbot.new(context)
             if not camera then continue end
             local bestTarget = nil
             local bestDist = math.huge
-            local center = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)
+            local center = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
             for _, p in ipairs(self.services.Players:GetPlayers()) do
                 if p == self.globals:GetPlayer() then continue end
                 if self.settings.teamCheck and not self.globals:IsEnemyPlayer(p) then continue end
