@@ -1,42 +1,44 @@
 local ErrorHandler = {}
 ErrorHandler.__index = ErrorHandler
 
-local unpackValues = unpack or table.unpack
-
-local function sanitizeOneLine(text, maxLen)
-    local line = tostring(text or ""):gsub("[\r\n]+", " ")
-    if maxLen and #line > maxLen then
-        line = line:sub(1, maxLen) .. "..."
-    end
-    return line
-end
-
 function ErrorHandler.new(source)
-    return setmetatable({
-        source = source or "?",
-    }, ErrorHandler)
+    return setmetatable({ source = source or "?" }, ErrorHandler)
 end
 
-function ErrorHandler:handlePcall(ok, ...)
-    if ok then
-        return ...
-    end
-    local err = sanitizeOneLine(select(1, ...), 200)
-    warn(string.format("[%s] Error: %s", self.source, err))
+function ErrorHandler:Spawn(name, fn)
+    task.spawn(function()
+        local ok, err = pcall(fn)
+        if not ok then
+            warn(string.format("[%s] %s: %s", self.source, name, tostring(err)))
+        end
+    end)
+end
+
+function ErrorHandler:Connect(signal, name, fn)
+    return signal:Connect(function(...)
+        local ok, err = pcall(fn, ...)
+        if not ok then
+            warn(string.format("[%s] %s: %s", self.source, name, tostring(err)))
+        end
+    end)
 end
 
 function ErrorHandler:wrap(fn)
     return function(...)
-        local args = { ... }
-        local results = { pcall(function()
-            return fn(unpackValues(args, 1, args.n or #args))
-        end) }
-        return self:handlePcall(unpackValues(results, 1, results.n or #results))
+        local args = {...}
+        local ok, err = pcall(function() fn(table.unpack(args)) end)
+        if not ok then
+            warn(string.format("[%s] Error: %s", self.source, tostring(err)))
+        end
     end
 end
 
 function ErrorHandler:try(fn, ...)
-    return self:handlePcall(pcall(fn, ...))
+    local ok, err = pcall(fn, ...)
+    if not ok then
+        warn(string.format("[%s] Error: %s", self.source, tostring(err)))
+    end
+    return ok
 end
 
 return ErrorHandler
